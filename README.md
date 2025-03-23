@@ -61,20 +61,33 @@ mongo_edition: org  # or enterprise
 
 > **Note**: MongoDB 8.0 is the latest major version and includes significant improvements in performance, security, and features. However, it's recommended to thoroughly test your application with MongoDB 8.0 before deploying to production, as it may include breaking changes from previous versions.
 
-### Version Stability
+### Version Control and Stability
 
-To ensure version stability across updates, you can pin the MongoDB version:
+This role provides flexible version control for MongoDB installations. You can specify exact versions or use wildcards to control update behavior:
 
 ```yaml
-mongo_version: "6.0.15"  # Pin to specific version
-mongo_version: "6.0.*"   # Pin to minor version
-mongo_version: "6.*"     # Pin to major version
+# Pin to specific version (most restrictive)
+mongo_version: "6.0.15"  # Will stay exactly at 6.0.15
+
+# Pin to minor version (allows patch updates)
+mongo_version: "6.0.*"   # Will stay at 6.0.x but allow updates within 6.0
+
+# Pin to major version (allows minor and patch updates)
+mongo_version: "6.*"     # Will stay at 6.x but allow updates within version 6
 ```
 
-When using version pinning:
-- Use specific versions (e.g., "6.0.15") for maximum stability
-- Use minor version pinning (e.g., "6.0.*") for security updates
-- Use major version pinning (e.g., "6.*") for feature updates
+By default, the role pins the MongoDB version to prevent accidental updates when running `apt update` and `apt install`. This is recommended for production environments.
+
+When version pinning is enabled:
+- MongoDB will stay at the specified version
+- Running `apt update` and `apt install` won't update MongoDB
+- Updates can only be performed using the role's update playbook
+- This ensures controlled updates and prevents accidental version changes
+
+To disable version pinning (not recommended for production):
+```yaml
+mongo_pin_version: false
+```
 
 ## No log
 
@@ -366,10 +379,6 @@ In development.
 ## Development
 
  * There is a reset playbook to remove all mongo files. This is useful for development purposes, see `tasks/reset.yml`. It is commented out by design
-
-### Testing
-
-For comprehensive testing information, including setup instructions, test scenarios, and troubleshooting, please refer to [TESTING.md](TESTING.md).
 
 ### Scaling
 
