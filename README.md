@@ -1,6 +1,6 @@
 # MongoDB
 
-An Ansible role that installs, configures and manages MongoDB for Ubuntu 22.04.
+An Ansible role that installs, configures and manages MongoDB for Ubuntu 22.04 and 24.04.
 
 MongoDB for RHEL-like flavors can [be found here](https://github.com/csuka/ansible_role_mongodb).
 
@@ -29,6 +29,13 @@ Can be used with Ansible version 2.9 to latest. Might support earlier versions a
 * On the controller node, ensure the [mongodb collection](https://docs.ansible.com/ansible/latest/collections/community/mongodb/index.html) is installed
 * The hosts are able to connect to each other, with preferably hostnames, and the set port, default 27017
 * Keep in mind there is enough disk space for data disk, and the backup if set
+* Supported Ubuntu versions:
+  - Ubuntu 22.04 LTS (Jammy Jellyfish)
+  - Ubuntu 24.04 LTS (Noble Numbat)
+
+## Version Detection
+
+This role automatically detects the Ubuntu version of the target system and configures the MongoDB repository accordingly. No manual version specification is required.
 
 ## Assertions
 
@@ -45,7 +52,29 @@ mongo_version: 6.0
 mongo_edition: org  # or enterprise
 ```
 
-So far, Ubuntu 22.04 only supports MongoDB 6.0, and not lower.
+### MongoDB Version Compatibility
+
+| Ubuntu Version | Supported MongoDB Versions | Recommended Version |
+|---------------|---------------------------|---------------------|
+| Ubuntu 22.04  | 6.0, 7.0, 8.0             | 6.0                 |
+| Ubuntu 24.04  | 6.0, 7.0, 8.0             | 6.0                 |
+
+> **Note**: MongoDB 8.0 is the latest major version and includes significant improvements in performance, security, and features. However, it's recommended to thoroughly test your application with MongoDB 8.0 before deploying to production, as it may include breaking changes from previous versions.
+
+### Version Stability
+
+To ensure version stability across updates, you can pin the MongoDB version:
+
+```yaml
+mongo_version: "6.0.15"  # Pin to specific version
+mongo_version: "6.0.*"   # Pin to minor version
+mongo_version: "6.*"     # Pin to major version
+```
+
+When using version pinning:
+- Use specific versions (e.g., "6.0.15") for maximum stability
+- Use minor version pinning (e.g., "6.0.*") for security updates
+- Use major version pinning (e.g., "6.*") for feature updates
 
 ## No log
 
@@ -337,6 +366,10 @@ In development.
 ## Development
 
  * There is a reset playbook to remove all mongo files. This is useful for development purposes, see `tasks/reset.yml`. It is commented out by design
+
+### Testing
+
+For comprehensive testing information, including setup instructions, test scenarios, and troubleshooting, please refer to [TESTING.md](TESTING.md).
 
 ### Scaling
 
