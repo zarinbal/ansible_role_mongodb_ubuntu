@@ -162,5 +162,3 @@ cython_debug/
 # RimaCC
 .vscode/
 inventories/
-kubespray/
-molecule/

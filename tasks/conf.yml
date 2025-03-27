@@ -14,14 +14,14 @@
     state: started
     enabled: true
 
-- name: conf | restart mongod service one by one, after a config change, if set
+- name: conf | restart mongod service one by one, after a config change
   shell: "systemctl restart mongod && sleep {{ mongo_restart_seconds }}"
   run_once: true
   delegate_to: "{{ item }}"
   loop: "{{ ansible_play_hosts }}"
   when:
     - mongo_restart_config
-    - mongo_conf_set.changed
+    - mongo_conf_set is changed
 
 - name: conf | check cluster health after config change if applicable
   community.mongodb.mongodb_status:
@@ -49,5 +49,5 @@
   when:
     - host_count != '1'
     - mongo_restart_config
-    - mongo_conf_set.changed
+    - mongo_conf_set is changed
     - mongo_primary

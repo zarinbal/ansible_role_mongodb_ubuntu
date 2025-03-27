@@ -424,8 +424,6 @@ I have tried configuring this countless amount of times, but always failed due t
       path: /opt/somewhere/mongod.log
     mongo_storage:
       dbPath: /opt/mongo/
-      journal:
-        enabled: true
     mongo_user:
       - database: burgers
         name: bob

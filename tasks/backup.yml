@@ -10,6 +10,18 @@
   run_once: true
 
 - block:
+    - name: Ensure cron is installed
+      apt:
+        name: cron
+        state: present
+      when: mongo_backup | default(false)
+
+    - name: Ensure cron is started
+      systemd:
+        name: cron
+        state: started
+        enabled: true
+      when: mongo_backup | default(false)
 
     - name: backup | ensure backup path exists
       file:

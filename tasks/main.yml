@@ -2,6 +2,11 @@
 # this reset playbook is meant for development, thus commented out by design
 # - include_tasks: reset.yml
 
+- name: DEBUG | Role is being executed
+  debug:
+    msg: "MongoDB role is running"
+
+
 # Do not skip, it is required
 - include_tasks: assert.yml
 

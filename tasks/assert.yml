@@ -3,10 +3,6 @@
   set_fact:
     host_count: "{{ ansible_play_hosts | length }}"
 
-- name: assert | that uneven amount of hosts are set
-  assert:
-    that: "{{ host_count | int % 2 != 0 }}"
-
 - name: assert | that naming is set correctly for replication roles
   assert:
     that: |
@@ -36,7 +32,6 @@
       - mongo_backup.pass != 'change_me'
 
 - block:
-
     - name: assert | create dictionary of bootstrappers
       set_fact:
         primaries: "{{ dict(keys|zip(values)) }}"

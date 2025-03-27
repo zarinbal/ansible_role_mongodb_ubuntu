@@ -23,6 +23,19 @@
         mongo_version is match("^8\\.[0-9]+(\\.[0-9]+)?(\\*)?$")
     msg: "MongoDB version {{ mongo_version }} is not supported on Ubuntu {{ ubuntu_version }}. Supported versions are 6.0, 6.1, 6.2, 7.0, 8.0"
 
+- name: install | normalize MongoDB version for APT and repo
+  set_fact:
+    mongo_version_normalized: "{{ mongo_version | regex_replace('\\*', '') | regex_replace('\\.$', '') }}"
+    mongo_version_major_minor: "{{ mongo_version | regex_search('^[0-9]+\\.[0-9]+') }}"
+    
+- name: install | normalize MongoDB edition for APT and repo
+  set_fact:
+    mongo_edition_normalized: "mongodb-{{ mongo_edition }}"
+
+- name: DEBUG | Role is being executed
+  debug:
+    msg: "MongoDB role is running {{ mongo_version }} (normalized: {{ mongo_version_normalized }}, major.minor: {{ mongo_version_major_minor }}) on {{ ubuntu_version }}"
+
 - name: install | dependencies
   apt:
     name: 
@@ -34,19 +47,17 @@
 
 - name: install | gpg key
   ansible.builtin.get_url:
-    url: "https://pgp.mongodb.com/server-{{ mongo_version }}.asc"
-    dest: "/etc/apt/keyrings/mongo_{{ mongo_version }}.asc"
+    url: "https://pgp.mongodb.com/server-{{ mongo_version_major_minor }}.asc"
+    dest: "/etc/apt/keyrings/mongo-server.asc"
     mode: 0644
+
 
 - name: install | repo
   apt_repository:
     repo: >-
-      deb [
-       arch=amd64,arm64
-       signed-by=/etc/apt/keyrings/mongo_{{- mongo_version }}.asc ]
-      https://repo.mongodb.org/apt/ubuntu {{ ubuntu_version }}/mongodb-org/{{ mongo_version }}
-      multiverse
-    filename: "mongodb-{{ mongo_edition }}-{{ mongo_version }}"
+      deb [arch=amd64,arm64 signed-by=/etc/apt/keyrings/mongo-server.asc]
+      https://repo.mongodb.org/apt/ubuntu {{ ubuntu_version }}/mongodb-org/{{ mongo_version_major_minor }} multiverse
+    filename: "mongodb-{{ mongo_edition }}-{{ mongo_version_normalized }}"
     state: present
 
 - name: install | group mongodb
@@ -67,9 +78,39 @@
     shell: /sbin/nologin
   register: set_user
 
+
+- name: install | mongo edition and components (pinned)
+  apt:
+    name:
+      - "{{ mongo_edition_normalized }}={{ mongo_version }}*"
+      - "{{ mongo_edition_normalized }}-server={{ mongo_version }}*"
+      - "{{ mongo_edition_normalized }}-shell={{ mongo_version }}*"
+      - "{{ mongo_edition_normalized }}-mongos={{ mongo_version }}*"
+      - "{{ mongo_edition_normalized }}-tools={{ mongo_version }}*"
+    state: present
+  when: mongo_pin_version | default(true)
+
+- name: install | mongo edition (unpinned)
+  apt:
+    name: "{{ mongo_edition_normalized }}={{ mongo_version }}*"
+    state: present
+  when: not mongo_pin_version | default(true)
+
 - name: install | mongo edition {{ mongo_edition }}
   apt:
-    name: mongodb-{{ mongo_edition }}
+    name: >-
+      {{ "mongodb-" + mongo_edition + '=' + mongo_version  }}
+    state: present
+
+- name: Pin MongoDB package version
+  copy:
+    content: |
+      Package: {{ "mongodb-" + mongo_edition }}
+      Pin: version {{ mongo_version | default('8.0.*') }}
+      Pin-Priority: 1000
+    dest: /etc/apt/preferences.d/mongodb
+    mode: '0644'
+  when: mongo_pin_version | default(true)
 
 - name: install | data folder
   file:
@@ -127,10 +168,3 @@
     name: pymongo
     executable: pip3
     version: "{{ mongo_pymongo_version }}"
-
-- name: install | ensure MongoDB repository is properly configured
-  apt:
-    update_cache: true
-    cache_valid_time: 3600
-  register: apt_update
-  changed_when: apt_update.rc == 0

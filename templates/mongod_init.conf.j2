@@ -1,6 +1,6 @@
 # mongod.conf
 
-# temporary file, for initial setup
+# temporary file, for initial setup2
 
 security:
   authorization: disabled
@@ -10,8 +10,6 @@ systemLog:
 
 storage:
   dbPath: {{ mongo_storage.dbPath }}
-  journal:
-    enabled: true
 
 processManagement:
   timeZoneInfo: /usr/share/zoneinfo
