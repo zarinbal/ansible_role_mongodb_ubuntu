@@ -1,0 +1,101 @@
+---
+- name: Converge
+  hosts: all
+  become: true
+  vars:
+    mongo_version: "8.0.1"
+    mongo_pin_version: false
+    mongo_edition: org
+    mongo_repo: true
+    mongo_pymongo_version: "4.11.0"
+    
+    # ubuntu_version: noble
+    mongo_admin_pass: "test123"
+    mongo_adminuser_pass: "test123"
+    mongo_backup:
+      enabled: false
+      # enabled: true
+      user: backup
+      pass: "test123"
+      # dbs:
+      #   - admin
+      #   - config
+      #   - local
+      # path: /var/lib/mongo_backups
+      # owner: mongodb
+      # group: mongodb
+      # mode: 0660
+      # hour: 2
+      # minute: 5
+      # day: "*"
+      # retention: 46
+    mongo_net:
+      bindIp: 0.0.0.0
+      port: 27017
+    mongo_systemlog:
+      destination: file
+      logAppend: true
+      path: /var/log/mongodb/mongod.log
+    mongo_storage:
+      dbPath: /var/lib/mongodb
+    # Explicitly set replication role to empty for standalone
+    mongo_replication_role: ''
+    # Disable THP for better performance
+    mongo_thp: false
+    # Set no_log to false for testing to see errors
+    mongo_no_log: false
+    # Set numa to false for testing to see errors
+    mongo_numa: false
+  roles:
+    - role:  ../../../
+  # tasks:
+  #   - name: Include required tasks
+  #     include_tasks: "{{ item }}"
+  #     loop:
+  #       - ../../tasks/main.yml
+  post_tasks:
+  - name: Wait for MongoDB to start
+    wait_for:
+      port: 27017
+      timeout: 30
+
+  - name: Test MongoDB connection
+    community.mongodb.mongodb_shell:
+      login_host: localhost
+      login_port: 27017
+      login_user: admin
+      login_password: "{{ mongo_admin_pass }}"
+      login_database: admin
+      eval: 'db.runCommand({ping: 1})'
+    register: mongo_test
+
+  - name: Verify MongoDB version
+    community.mongodb.mongodb_shell:
+      login_host: localhost
+      login_port: 27017
+      login_user: admin
+      login_password: "{{ mongo_admin_pass }}"
+      login_database: admin
+      eval: 'db.version()'
+    register: mongo_version_check
+
+  - name: Debug MongoDB mongo_test output
+    debug:
+      var: mongo_test
+  - name: Debug MongoDB version check output
+    debug:
+      var: mongo_version_check
+
+  - name: Assert MongoDB version matches expected version pattern
+    vars:
+      actual_version: "{{ mongo_version_check.transformed_output[0] | regex_replace('\"', '') }}"
+    assert:
+      that:
+        - >
+          (mongo_version is match('^[0-9]+\\.[0-9]+\\.[0-9]+$') and actual_version == mongo_version) or
+          (mongo_version is match('^[0-9]+\\.[0-9]+\\.\\*$') and actual_version is search('^' + mongo_version[:-2])) or
+          (mongo_version is match('^[0-9]+\\.\\*$') and actual_version is search('^' + mongo_version[:-2]))
+      msg: >
+        MongoDB version {{ actual_version }} does not match the expected pattern {{ mongo_version }}
+
+
