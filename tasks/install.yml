@@ -168,3 +168,4 @@
     name: pymongo
     executable: pip3
     version: "{{ mongo_pymongo_version }}"
+  when: mongo_install_pymongo

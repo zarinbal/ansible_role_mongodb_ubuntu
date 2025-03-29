@@ -12,6 +12,14 @@
     # ubuntu_version: noble
     mongo_admin_pass: "test123"
     mongo_adminuser_pass: "test123"
+
+    # mongo_net:
+    #   bindIp: 0.0.0.0
+    #   port: 27017
+    #   tls:
+    #     mode: preferTLS
+    #     certificateKeyFile: /mnt/mongo/ssl/mongo.pem
+    #     caFile: /mnt/mongo/ssl/mongo_ca.crt
     mongo_backup:
       enabled: false
       # enabled: true
