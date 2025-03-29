@@ -2,8 +2,7 @@
 mongo_repo: true
 mongo_version: 6.0
 mongo_edition: org  # org or enterprise
-mongo_pymongo_version: 4.3.3
-mongo_install_pymongo: false
+mongo_pymongo_version: 4.11.0
 
 # apply production recommendations, see readme
 mongo_thp: true
